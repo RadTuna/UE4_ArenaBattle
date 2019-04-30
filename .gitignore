@@ -1,0 +1,9 @@
+# Unreal Git Ignore
+
+/Saved
+/intermediate
+/.vs
+/Build
+/Plugins
+*.sln
+*_BuiltData.uasset
