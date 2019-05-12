@@ -8,12 +8,6 @@ void AABPlayerController::PostInitializeComponents()
 	ABLOG_S(Warning)
 }
 
-void AABPlayerController::Possess(APawn* aPawn)
-{
-	ABLOG_S(Warning);
-	Super::Possess(aPawn);
-}
-
 void AABPlayerController::BeginPlay()
 {
 	FInputModeGameOnly InputMode;
