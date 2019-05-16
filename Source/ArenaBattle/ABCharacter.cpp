@@ -3,7 +3,10 @@
 #include "ABCharacter.h"
 #include "ABAnimInstance.h"
 #include "ABWeapon.h"
+#include "ABCharacterStatComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Components/WidgetComponent.h"
+#include "ABCharacterWidget.h"
 
 
 // Sets default values
@@ -14,11 +17,14 @@ AABCharacter::AABCharacter()
 	
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRING_ARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
+	CharacterStat = CreateDefaultSubobject<UABCharacterStatComponent>(TEXT("CHARACTER_STAT"));
+	HPBarWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HPBAR_WIDGET"));
 
 	GetMesh()->AddRelativeLocation(FVector(0.f, 0.f, -88.f));
 	GetMesh()->AddRelativeRotation(FRotator(0.f, -90.f, 0.f));
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
+	HPBarWidget->SetupAttachment(GetMesh());
 	
 	SpringArm->TargetArmLength = 400.f;
 	SpringArm->AddRelativeLocation(FVector(0.f, 0.f, 44.f));
@@ -33,10 +39,19 @@ AABCharacter::AABCharacter()
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 
 	static ConstructorHelpers::FClassFinder<UAnimInstance>
-		ANIM_ASSET(TEXT("AnimBlueprint'/Game/Animations/WarriorAnimBlueprint.WarriorAnimBlueprint_C'"));
+		ANIM_ASSET(TEXT("AnimBlueprint'/Game/Book/Animations/WarriorAnimBlueprint.WarriorAnimBlueprint_C'"));
 	if (ANIM_ASSET.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(ANIM_ASSET.Class);
+	}
+
+	HPBarWidget->SetRelativeLocation(FVector(0.f, 0.f, 180.f));
+	HPBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	static ConstructorHelpers::FClassFinder<UUserWidget>
+		UI_HPBAR(TEXT("WidgetBlueprint'/Game/Book/UI/UI_HPBar.UI_HPBar_C'"));
+	if (UI_HPBAR.Succeeded())
+	{
+		TempWidget = UI_HPBAR.Class;
 	}
 
 	SetControlMode(EControlMode::GTA);
@@ -55,23 +70,23 @@ AABCharacter::AABCharacter()
 
 	AttackRange = 200.f;
 	AttackRadius = 50.f;
+
+	IsArmed = false;
 }
 
 // Called when the game starts or when spawned
 void AABCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	/*
-	FName WeaponSocket(TEXT("hand_rSocket"));
-	if (GetMesh()->DoesSocketExist(WeaponSocket))
+
+	HPBarWidget->SetWidgetClass(TempWidget);
+	HPBarWidget->SetDrawSize(FVector2D(150.f, 50.f));
+	UABCharacterWidget* CharacterWidget = Cast<UABCharacterWidget>(HPBarWidget->GetUserWidgetObject());
+
+	if (CharacterWidget != nullptr)
 	{
-		AABWeapon* CurWeapon = GetWorld()->SpawnActor<AABWeapon>(FVector::ZeroVector, FRotator::ZeroRotator);
-		if (CurWeapon != nullptr)
-		{
-			CurWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocket);
-		}
+		CharacterWidget->BindCharacterStat(CharacterStat);
 	}
-	*/
 }
 
 // Called every frame
@@ -129,6 +144,12 @@ void AABCharacter::PostInitializeComponents()
 	});
 	
 	ABAnim->OnAttackHitCheck.AddUObject(this, &AABCharacter::AttackCheck);
+
+	CharacterStat->OnHPIsZero.AddLambda([this]() -> void {
+		ABLOG(Warning, TEXT("OnHPIsZero"));
+		ABAnim->SetDeadAnim();
+		SetActorEnableCollision(false);
+		});
 }
 
 void AABCharacter::MoveForward(float NewAxisValue)
@@ -235,10 +256,13 @@ void AABCharacter::Attack()
 	else
 	{
 		ABCHECK(CurrentCombo == 0);
-		AttackStartComboState();
-		ABAnim->PlayAttackMontage();
-		ABAnim->JumpToAttackMontageSection(CurrentCombo);
-		IsAttacking = true;
+		if (IsArmed == true)
+		{
+			AttackStartComboState();
+			ABAnim->PlayAttackMontage();
+			ABAnim->JumpToAttackMontageSection(CurrentCombo);
+			IsAttacking = true;
+		}
 	}
 }
 
@@ -307,7 +331,7 @@ void AABCharacter::AttackCheck()
 			ABLOG(Warning, TEXT("Hit Actor Name : %s"), *HitResult.Actor->GetName());
 
 			FDamageEvent DamageEvent;
-			HitResult.Actor->TakeDamage(50.f, DamageEvent, GetController(), this);
+			HitResult.Actor->TakeDamage(CharacterStat->GetAttack(), DamageEvent, GetController(), this);
 		}
 	}
 }
@@ -316,10 +340,25 @@ float AABCharacter::TakeDamage(float DamageAmount, const FDamageEvent& DamageEve
 {
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	ABLOG(Warning, TEXT("Actor : %s took Damage : %f"), *GetName(), FinalDamage);
-	if (FinalDamage > 0.f)
-	{
-		ABAnim->SetDeadAnim();
-		SetActorEnableCollision(false);
-	}
+
+	CharacterStat->SetDamage(FinalDamage);
 	return FinalDamage;
+}
+
+bool AABCharacter::CanSetWeapon()
+{
+	return (nullptr == CurrentWeapon);
+}
+
+void AABCharacter::SetWeapon(class AABWeapon* NewWeapon)
+{
+	ABCHECK(nullptr != NewWeapon && nullptr == CurrentWeapon);
+	FName WeaponSocket(TEXT("hand_rSocket"));
+	if (nullptr != NewWeapon)
+	{
+		NewWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
+		NewWeapon->SetOwner(this);
+		CurrentWeapon = NewWeapon;
+		IsArmed = true;
+	}
 }

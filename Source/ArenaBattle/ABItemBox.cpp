@@ -2,8 +2,9 @@
 
 
 #include "ABItemBox.h"
-#include "ABCharacter.h"
 #include "ABWeapon.h"
+#include "ABCharacter.h"
+
 
 // Sets default values
 AABItemBox::AABItemBox()
@@ -13,9 +14,11 @@ AABItemBox::AABItemBox()
 
 	Box = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BOX"));
 	Trigger = CreateDefaultSubobject<UBoxComponent>(TEXT("TRIGGER"));
+	ChestParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("CHEST_PARTICLE"));
 
 	RootComponent = Trigger;
 	Box->SetupAttachment(Trigger);
+	ChestParticle->SetupAttachment(Trigger);
 
 	Trigger->SetBoxExtent(FVector(40.f, 42.f, 30.f));
 	static ConstructorHelpers::FObjectFinder<UStaticMesh>
@@ -26,8 +29,18 @@ AABItemBox::AABItemBox()
 	}
 	Box->SetRelativeLocation(FVector(0.f, -3.5f, -30.f));
 
+	static ConstructorHelpers::FObjectFinder<UParticleSystem>
+		P_CHEST(TEXT("ParticleSystem'/Game/InfinityBladeGrassLands/Effects/FX_Treasure/Chest/P_TreasureChest_Open_Mesh.P_TreasureChest_Open_Mesh'"));
+	if (P_CHEST.Succeeded())
+	{
+		ChestParticle->SetTemplate(P_CHEST.Object);
+		ChestParticle->bAutoActivate = false;
+	}
+
 	Trigger->SetCollisionProfileName(TEXT("ItemBox"));
 	Box->SetCollisionProfileName(TEXT("NoCollision"));
+
+	WeaponItemClass = AABWeapon::StaticClass();
 }
 
 // Called when the game starts or when spawned
@@ -54,19 +67,32 @@ void AABItemBox::PostInitializeComponents()
 void AABItemBox::OnCharacterOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	AABCharacter* Character = Cast<AABCharacter>(OtherActor);
-	if (Character != nullptr)
+	AABCharacter* ABCharacter = Cast<AABCharacter>(OtherActor);
+	ABCHECK(nullptr != ABCharacter);
+
+	if (nullptr != ABCharacter && nullptr != WeaponItemClass)
 	{
-		FName WeaponSocket(TEXT("hand_rSocket"));
-		if (Character->GetMesh()->DoesSocketExist(WeaponSocket))
+		if (ABCharacter->CanSetWeapon())
 		{
-			AABWeapon* CurWeapon = GetWorld()->SpawnActor<AABWeapon>(FVector::ZeroVector, FRotator::ZeroRotator);
-			if (CurWeapon != nullptr)
-			{
-				CurWeapon->AttachToComponent(Character->GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocket);
-			}
+			AABWeapon* NewWeapon = GetWorld()->SpawnActor<AABWeapon>(WeaponItemClass, FVector::ZeroVector, FRotator::ZeroRotator);
+			ABCharacter->SetWeapon(NewWeapon);
+
+			ChestParticle->Activate(true);
+			ChestParticle->SetRelativeLocation(FVector(0.f, -3.5f, -60.f));
+			Box->SetHiddenInGame(true, true);
+			SetActorEnableCollision(false);
+			ChestParticle->OnSystemFinished.AddDynamic(this, &AABItemBox::OnSystemFinished);
+		}
+		else
+		{
+			ABLOG(Warning, TEXT("%s can't equip weapon currently."), *ABCharacter->GetName());
 		}
 	}
 	ABLOG_S(Warning);
+}
+
+void AABItemBox::OnSystemFinished(class UParticleSystemComponent* PSystem)
+{
+	Destroy();
 }
 

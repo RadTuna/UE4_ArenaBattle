@@ -38,7 +38,7 @@ AABPawn::AABPawn()
 	SkeletalMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 
 	static ConstructorHelpers::FClassFinder<UAnimInstance>
-		WARRIOR_ANIM(TEXT("AnimBlueprint'/Game/Animations/WarriorAnimBlueprint.WarriorAnimBlueprint_C'"));
+		WARRIOR_ANIM(TEXT("AnimBlueprint'/Game/Book/Animations/WarriorAnimBlueprint.WarriorAnimBlueprint_C'"));
 	if (WARRIOR_ANIM.Succeeded())
 	{
 		SkeletalMesh->SetAnimInstanceClass(WARRIOR_ANIM.Class);

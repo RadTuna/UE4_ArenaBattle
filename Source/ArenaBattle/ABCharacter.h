@@ -43,6 +43,9 @@ public:
 	virtual void PostInitializeComponents() override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
+	bool CanSetWeapon();
+	void SetWeapon(class AABWeapon* NewWeapon);
+
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	USpringArmComponent* SpringArm;
 	
@@ -51,6 +54,15 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon")
 	USkeletalMeshComponent* Weapon;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon")
+	class AABWeapon* CurrentWeapon;
+
+	UPROPERTY(VisibleAnywhere, Category = "Stat")
+	class UABCharacterStatComponent* CharacterStat;
+
+	UPROPERTY(VisibleAnywhere, Category = "UI")
+	class UWidgetComponent* HPBarWidget;
 
 private:
 	void MoveForward(float NewAxisValue);
@@ -74,6 +86,8 @@ private:
 	UPROPERTY()
 	class UABAnimInstance* ABAnim;
 
+	TSubclassOf<UUserWidget> TempWidget;
+
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Attack", Meta = (AllowPrivateAccess = true))
 	bool CanNextCombo;
 
@@ -91,4 +105,7 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Attack", Meta = (AllowPrivateAccess = true))
 	float AttackRadius;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attack", Meta = (AllowPrivateAccess = true))
+	bool IsArmed;
 };
