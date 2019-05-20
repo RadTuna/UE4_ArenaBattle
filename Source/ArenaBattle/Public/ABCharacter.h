@@ -75,6 +75,8 @@ public:
 	FOnAttackEndDelegate OnAttackEnd;
 	FOnCharacterDeadDelegate OnCharacterDead;
 
+	int32 GetExp() const;
+
 private:
 	void MoveForward(float NewAxisValue);
 	void MoveRight(float NewAxisValue);

@@ -24,6 +24,7 @@ public:
 	int32 GetCharacterLevel() const;
 	float GetExpRatio() const;
 	bool AddExp(int32 IncomeExp);
+	void AddGameScore();
 	
 	void InitPlayerData();
 

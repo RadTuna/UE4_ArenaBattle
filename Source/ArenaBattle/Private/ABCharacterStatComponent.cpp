@@ -46,7 +46,7 @@ void UABCharacterStatComponent::SetNewLevel(int32 NewLevel)
 	if (CurrentStatData != nullptr)
 	{
 		Level = CurrentStatData->Level;
-		CurrentHP = CurrentStatData->MaxHP;
+		SetHP(CurrentStatData->MaxHP);
 	}
 	else
 	{
@@ -72,13 +72,13 @@ void UABCharacterStatComponent::SetHP(float NewHP)
 	}
 }
 
-float UABCharacterStatComponent::GetAttack()
+float UABCharacterStatComponent::GetAttack() const
 {
 	ABCHECK(nullptr != CurrentStatData, 0.f);
 	return CurrentStatData->Attack;
 }
 
-float UABCharacterStatComponent::GetHPRatio()
+float UABCharacterStatComponent::GetHPRatio() const
 {
 	ABCHECK(nullptr != CurrentStatData, 0.f);
 
@@ -90,5 +90,10 @@ float UABCharacterStatComponent::GetHPRatio()
 	{
 		return CurrentHP / CurrentStatData->MaxHP;
 	}
+}
+
+int32 UABCharacterStatComponent::GetDropExp() const
+{
+	return CurrentStatData->DropExp;
 }
 

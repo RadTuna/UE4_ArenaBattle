@@ -49,7 +49,7 @@ private:
 	void OnNPCSpawn();
 
 	UFUNCTION()
-	void CallSetState();
+	void OnKeyNPCDestroyed(AActor* DestroyedActor);
 
 private:
 
