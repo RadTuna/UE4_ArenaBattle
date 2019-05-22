@@ -6,6 +6,7 @@
 #include "ABCharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Engine.h"
 
 UBTService_Detect::UBTService_Detect()
 {
@@ -54,6 +55,11 @@ void UBTService_Detect::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 				DrawDebugSphere(World, Center, DetectRadius, 16, FColor::Green, false, 0.3f);
 				DrawDebugPoint(World, ABCharacter->GetActorLocation(), 10.f, FColor::Green, false, 0.3f);
 				DrawDebugLine(World, ControllingPawn->GetActorLocation(), ABCharacter->GetActorLocation(), FColor::Yellow, false, 0.3f);
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, TEXT("Detect!!"));
+				if (OwnerComp.GetBlackboardComponent()->GetValueAsObject(AABAIController::TargetKey) != nullptr)
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, OwnerComp.GetBlackboardComponent()->GetValueAsObject(AABAIController::TargetKey)->GetName());
+				}
 				return;
 			}
 		}
@@ -61,6 +67,11 @@ void UBTService_Detect::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 	else
 	{
 		OwnerComp.GetBlackboardComponent()->SetValueAsObject(AABAIController::TargetKey, nullptr);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, TEXT("None Detect!!"));
+		if (OwnerComp.GetBlackboardComponent()->GetValueAsObject(AABAIController::TargetKey) != nullptr)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, OwnerComp.GetBlackboardComponent()->GetValueAsObject(AABAIController::TargetKey)->GetName());
+		}		
 	}
 
 	DrawDebugSphere(World, Center, DetectRadius, 16, FColor::Red, false, 0.3f);

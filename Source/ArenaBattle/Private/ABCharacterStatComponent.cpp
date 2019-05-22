@@ -97,3 +97,8 @@ int32 UABCharacterStatComponent::GetDropExp() const
 	return CurrentStatData->DropExp;
 }
 
+int32 UABCharacterStatComponent::GetLevel() const
+{
+	return CurrentStatData->Level;
+}
+

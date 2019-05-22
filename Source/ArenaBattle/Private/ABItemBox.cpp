@@ -19,6 +19,7 @@ AABItemBox::AABItemBox()
 	RootComponent = Trigger;
 	Box->SetupAttachment(Trigger);
 	ChestParticle->SetupAttachment(Trigger);
+	ChestParticle->SetRelativeLocation(FVector(0.f, -3.5f, -60.f));
 
 	Trigger->SetBoxExtent(FVector(40.f, 42.f, 30.f));
 	static ConstructorHelpers::FObjectFinder<UStaticMesh>
@@ -78,7 +79,7 @@ void AABItemBox::OnCharacterOverlap(UPrimitiveComponent* OverlappedComp, AActor*
 			ABCharacter->SetWeapon(NewWeapon);
 
 			ChestParticle->Activate(true);
-			ChestParticle->SetRelativeLocation(FVector(0.f, -3.5f, -60.f));
+			// ChestParticle->SetRelativeLocation(FVector(0.f, -3.5f, -60.f));
 			Box->SetHiddenInGame(true, true);
 			SetActorEnableCollision(false);
 			ChestParticle->OnSystemFinished.AddDynamic(this, &AABItemBox::OnSystemFinished);

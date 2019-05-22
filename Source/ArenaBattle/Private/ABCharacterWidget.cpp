@@ -4,6 +4,7 @@
 #include "ABCharacterWidget.h"
 #include "ABCharacterStatComponent.h"
 #include "Components/ProgressBar.h"
+#include "Components/TextBlock.h"
 
 void UABCharacterWidget::BindCharacterStat(UABCharacterStatComponent* NewCharacterStat)
 {
@@ -18,6 +19,8 @@ void UABCharacterWidget::NativeConstruct()
 	Super::NativeConstruct();
 	HPProgressBar = Cast<UProgressBar>(GetWidgetFromName(TEXT("PB_HPBar")));
 	ABCHECK(HPProgressBar != nullptr);
+
+	CurrentLevel = Cast<UTextBlock>(GetWidgetFromName(TEXT("TB_Level")));
 	UpdateHPWidget();
 }
 
@@ -28,6 +31,11 @@ void UABCharacterWidget::UpdateHPWidget()
 		if (nullptr != HPProgressBar)
 		{
 			HPProgressBar->SetPercent(CurrentCharacterStat->GetHPRatio());
+		}
+
+		if (CurrentLevel != nullptr)
+		{
+			CurrentLevel->SetText(FText::FromString(FString::FromInt(CurrentCharacterStat->GetLevel())));
 		}
 	}
 }

@@ -13,6 +13,7 @@
 #include "ABPlayerController.h"
 #include "ABPlayerState.h"
 #include "ABHUDWidget.h"
+#include "ABGameMode.h"
 
 
 bool AABCharacter::bIsFirstCharacter = true;
@@ -134,7 +135,9 @@ void AABCharacter::BeginPlay()
 
 	if (bIsPlayer == true)
 	{
-		AssetIndex = 4;
+		AABPlayerState* ABPlayerState = Cast<AABPlayerState>(GetPlayerState());
+		ABCHECK(ABPlayerState != nullptr);
+		AssetIndex = ABPlayerState->GetCharacterIndex();
 	}
 	else
 	{
@@ -190,6 +193,15 @@ void AABCharacter::SetCharacterState(ECharacterState NewState)
 			ABCHECK(ABPlayerState != nullptr);
 			CharacterStat->SetNewLevel(ABPlayerState->GetCharacterLevel());
 		}
+		else
+		{
+			AABGameMode* ABGameMode = Cast<AABGameMode>(GetWorld()->GetAuthGameMode());
+			ABCHECK(ABGameMode != nullptr);
+			int32 TargetLevel = FMath::CeilToInt((static_cast<int>(ABGameMode->GetScore()) * 0.8f));
+			int32 FinalLevel = FMath::Clamp<int32>(TargetLevel, 1, 20);
+			ABLOG(Warning, TEXT("New NPC Level : %d"), FinalLevel);
+			CharacterStat->SetNewLevel(FinalLevel);
+		}
 		SetActorHiddenInGame(true);
 		HPBarWidget->SetHiddenInGame(true);
 		bCanBeDamaged = false;
@@ -243,7 +255,7 @@ void AABCharacter::SetCharacterState(ECharacterState NewState)
 		GetWorld()->GetTimerManager().SetTimer(DeadTimerhandle, FTimerDelegate::CreateLambda([this]() -> void {
 			if (bIsPlayer == true)
 			{
-				ABPlayerController->RestartLevel();
+				ABPlayerController->ShowResultUI();
 			}
 			else
 			{

@@ -26,4 +26,7 @@ private:
 
 	UPROPERTY()
 	class UProgressBar* HPProgressBar;
+
+	UPROPERTY()
+	class UTextBlock* CurrentLevel;
 };

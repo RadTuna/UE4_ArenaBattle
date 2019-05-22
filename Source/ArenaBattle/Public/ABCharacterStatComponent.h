@@ -33,6 +33,7 @@ public:
 	void SetHP(float NewHP);
 	float GetAttack() const;
 	float GetHPRatio() const;
+	int32 GetLevel() const;
 	int32 GetDropExp() const;
 
 	FOnHPIsZeroDelegate OnHPIsZero;
